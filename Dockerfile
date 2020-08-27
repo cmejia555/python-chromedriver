@@ -1,4 +1,4 @@
-FROM python:3.8-buster
+FROM python:3.8-slim-buster
 
 ENV CHROMEDRIVER_DIR /driver
 
@@ -8,15 +8,20 @@ ENV HEADLESS_MODE=True
 
 # Install Google Chrome
 RUN echo "Updating system" \
+    && apt-get update \
     && apt-get install -y \
         wget \
         unzip \
         curl \
+        git \
+        gnupg \
+	    --no-install-recommends \
     && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
     && echo "Installing Chrome" \
     && apt-get update \
     && apt-get install -y google-chrome-stable --no-install-recommends \
+    && apt-get purge --auto-remove -y gnupg \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
 # Download and install Chromedriver
@@ -30,8 +35,8 @@ RUN mkdir -p $CHROMEDRIVER_DIR \
 RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
 ENV PATH "/root/.poetry/bin:${PATH}"
 
-COPY . /app
-WORKDIR app
+WORKDIR /app
+COPY . .
 
 RUN poetry config virtualenvs.create false \
     && poetry install --no-dev --no-root
